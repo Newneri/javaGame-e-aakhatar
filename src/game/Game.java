@@ -4,6 +4,11 @@ import java.util.Scanner;
 
 import generation.*;
 
+/**
+ * Main game class that manages the game loop and level transitions.
+ * @author Abdelhamid AKHATAR
+ * @email abdelhamid.akhatar@etu.cyu.fr
+ */
 public class Game {
 
 	private boolean gameOn = true;
@@ -12,20 +17,37 @@ public class Game {
 	private Level level;
 	private String name;
 
+	/**
+	 * Constructs a new Game instance.
+	 * @param args Array of level file paths.
+	 * @param name The name of the player.
+	 */
 	public Game(String[] args, String name){
 		this.levels = args.clone();
 		this.name = name;
 		this.level = new Level(this.levels[index], name);
 	}
 
+	/**
+	 * Sets the game state.
+	 * @param status true if the game is running, false otherwise.
+	 */
 	public void setGameOn(boolean status){
 		this.gameOn = status;
 	}
 
+	/**
+	 * Checks if the game is currently running.
+	 * @return true if the game is on, false otherwise.
+	 */
 	public boolean getGameOn() {
 		return this.gameOn;
 	}
 	
+	/**
+	 * Advances the game to the next level.
+	 * Preserves player stats (score, lives) across levels.
+	 */
 	public void nextLevel() {
 		this.index++;
 		int[] stats = {this.level.getPlayer().getScore(), this.level.getPlayer().getLives()};
@@ -37,6 +59,10 @@ public class Game {
 	}
 
 	
+	/**
+	 * Main entry point for the game.
+	 * @param args Command line arguments containing level file paths.
+	 */
 	public static void main(String[] args) {
 		try {
 			Scanner myScanner = new Scanner(System.in);

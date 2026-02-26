@@ -5,7 +5,10 @@ import java.nio.file.*;
 import java.util.List;
 import java.io.IOException;
 
-
+/**
+ * Represents a game level, managing the map, player movement, and game rules.
+ * @author Abdelhamid AKHATAR <abdelhamid.akhatar@etu.cyu.fr>
+ */
 public class Level {
 	private int rows;
 	private int cols;
@@ -17,6 +20,9 @@ public class Level {
 	private boolean gameOn = true;
 	private int numberOfCoins;
 	
+	/**
+	 * Enum representing possible movement directions.
+	 */
 	private enum Movement{
 		UP(-1, 0), DOWN(1, 0), RIGHT(0,1), LEFT(0, -1);
 		private int y, x;
@@ -35,6 +41,12 @@ public class Level {
 	private Movement left = Movement.LEFT;
 	
 	
+	/**
+	 * Constructs a new Level from a file.
+	 * Randomly places the player on a valid empty spot.
+	 * @param filename Path to the level configuration file.
+	 * @param name Name of the player.
+	 */
 	public Level(String filename, String name) {
 		
 		numberOfLevels++;
@@ -62,6 +74,10 @@ public class Level {
 		
 	}
 	
+	/**
+	 * Counts the number of coins present in the map.
+	 * @return The total number of coins.
+	 */
 	public int countCoins() {
 		int coins = 0;
 		for(int y = 0; y < this.rows; y++) {
@@ -75,6 +91,12 @@ public class Level {
 	}	
 	
 
+	/**
+	 * Reads the level layout from a file.
+	 * @param filename The path to the file.
+	 * @return An array of strings representing the map rows.
+	 * @throws RuntimeException if the file cannot be read.
+	 */
 	public String[] readLevel(String filename) {
         try {
             Path path = Paths.get(filename);
@@ -91,8 +113,16 @@ public class Level {
         }
     }
 	
+	/**
+	 * Gets the current number of coins remaining.
+	 * @return The number of coins.
+	 */
 	public int getNumberOfCoins() { return this.numberOfCoins; }
 	
+	/**
+	 * Sets the number of coins.
+	 * @param coins The new number of coins.
+	 */
 	public void setNumberOfCoins(int coins) {
 		if(coins >= 0) {
 			this.numberOfCoins = coins;
@@ -101,20 +131,48 @@ public class Level {
 		}
 	}
 
+	/**
+	 * Checks if the level is currently active.
+	 * @return true if the level is active.
+	 */
 	public boolean getGameOn() { return this.gameOn; }
 
+	/**
+	 * Sets the level active state.
+	 * @param state The new state.
+	 */
 	public void setGameOn(boolean state) {
 		this.gameOn = state;
 	}
 	
+	/**
+	 * Gets the total number of levels created.
+	 * @return The number of levels.
+	 */
 	public static int getNumberOfLevels() { return numberOfLevels; }
 	
+	/**
+	 * Gets the number of rows in the map.
+	 * @return The number of rows.
+	 */
 	public int getRows() { return this.rows; }
 	
+	/**
+	 * Gets the number of columns in the map.
+	 * @return The number of columns.
+	 */
 	public int getCols() { return this.cols; }
 	
+	/**
+	 * Gets the map grid.
+	 * @return The 2D char array representing the map.
+	 */
 	public char[][] getMap() { return this.map; }
 	
+	/**
+	 * Initializes the map from string array.
+	 * @param stringMap Array of strings representing rows.
+	 */
 	public void setMap(String[] stringMap) {
 		this.map = new char[this.getRows()][this.getCols()];		
 		for (int i = 0; i < this.rows; i++) {
@@ -123,8 +181,16 @@ public class Level {
 		
 	}
 
+	/**
+	 * Gets the player instance.
+	 * @return The player.
+	 */
 	public Player getPlayer() { return this.player; }
 	
+	/**
+	 * Gets the initial spawn position of the player.
+	 * @return A copy of the initial position array.
+	 */
 	public int[] getInitialPosition() { return this.initialPosition.clone(); }
 
 	@Override
@@ -132,6 +198,9 @@ public class Level {
 		return "Level" + (getNumberOfLevels() + " Coins: " + this.getNumberOfCoins());
 	}
 
+	/**
+	 * Displays the current state of the level to the console.
+	 */
 	public void show() {
 		System.out.println(this.getPlayer() + " --- " + this);
 		for(int i = 0; i < this.getRows(); i++) {
@@ -142,16 +211,33 @@ public class Level {
         }
 	}
 	
+	/**
+	 * Checks if a specific coordinate is a wall.
+	 * @param y Row index.
+	 * @param x Column index.
+	 * @return true if the coordinate is a wall '#'.
+	 */
 	public boolean isWall(int y, int x) {
 		return (this.getMap()[y][x] == '#');
 	}
 
+	/**
+	 * Validates if a move is possible.
+	 * Checks boundaries and walls.
+	 * @param y Vertical movement delta.
+	 * @param x Horizontal movement delta.
+	 * @return true if the move is valid.
+	 */
 	public boolean checkMoveValidity(int y, int x) {
 		return (!this.isWall(this.getPlayer().getPosition()[0] + y, this.getPlayer().getPosition()[1] + x) && 
         		( (this.getPlayer().getPosition()[1] + x ) >= 0 && (this.getPlayer().getPosition()[1] + x < this.getCols()) ) && 
         		( (this.getPlayer().getPosition()[0] + y ) >= 0 && (this.getPlayer().getPosition()[0] + y < this.getRows()) )); 
 	}
 
+	/**
+	 * Updates the game state based on player input.
+	 * Handles movement, scoring, and collisions.
+	 */
 	public void update() {
 		int move[] = this.getInputKey();
 		int y = move[0];
@@ -176,6 +262,10 @@ public class Level {
 		this.show();
 	}
 
+	/**
+	 * Captures player input for movement.
+	 * @return An array {y, x} representing the movement direction.
+	 */
 	public int[] getInputKey() {
 		Scanner myScanner = new Scanner(System.in);
 		int[] move = {0, 0};
