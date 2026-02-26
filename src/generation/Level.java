@@ -1,44 +1,48 @@
 package generation;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 import java.nio.file.*;
 import java.util.List;
 import java.io.IOException;
 
-/**
- * Represents a game level containing a map grid and a player.
- * Manages the game state, player movement, and map rendering.
- * 
- * @author Akhatar Abdelhamid abdelhamid.akhatar@etu.cyu.fr
- */
+
 public class Level {
 	private int rows;
 	private int cols;
 	private char[][] map;
 	private Player player;
-	Random rand = new Random();
+	private int[] initialPosition = new int[2];
+	private Random rand = new Random();
 	private static int numberOfLevels = 0;
 	private boolean gameOn = true;
+	private int numberOfCoins;
 	
-	/**
-	 * Constructs a Level from a string array representing the map.
-	 * Initializes the grid, randomly places the player on a valid space,
-	 * and increments the level count.
-	 *
-	 * @param stringMap An array of strings where each string represents a row of the map.
-	 */
-	public Level(String[] stringMap) {
+	private enum Movement{
+		UP(-1, 0), DOWN(1, 0), RIGHT(0,1), LEFT(0, -1);
+		private int y, x;
+		private Movement(int y, int x) {
+			this.y = y;
+			this.x = x;
+		}
+		
+		public int[] getMovement() { return new int[]{this.y, this.x}; }
+		
+	}	
+	
+	private Movement up = Movement.UP;
+	private Movement down = Movement.DOWN;
+	private Movement right = Movement.RIGHT;
+	private Movement left = Movement.LEFT;
+	
+	
+	public Level(String filename, String name) {
+		
+		numberOfLevels++;
+		String[] stringMap = readLevel(filename);
 		
 		this.rows = stringMap.length;
 		this.cols = stringMap[0].length();
-		this.map = new char[rows][cols];
-		numberOfLevels++;
-		
-		for (int i = 0; i < this.rows; i++) {
-	        this.map[i] = stringMap[i].toCharArray();
-	    }
-		
+		this.setMap(stringMap);
 		int x;
 		int y;
 		boolean verif;
@@ -48,30 +52,30 @@ public class Level {
 			verif = this.map[y][x] != ' ';
 		} while(verif);
 		
-		int[] position = {y, x};
-		this.player = new Player(position);
+		this.initialPosition[0] = y;
+		this.initialPosition[1] = x;
+		this.player = new Player(this.initialPosition.clone(), name);
 		
-		this.map[y][x] = String.valueOf(Player.getNumberOfPlayers()).charAt(0);
+		this.map[y][x] = this.player.getName().charAt(0);
+		
+		this.numberOfCoins = this.countCoins();
 		
 	}
 	
-	/**
-	 * Constructs a Level by reading the map layout from a specified file.
-	 *
-	 * @param filename The path to the file containing the level layout.
-	 */
-	public Level(String filename) {
-	    this(readLevel(filename));
-	}
+	public int countCoins() {
+		int coins = 0;
+		for(int y = 0; y < this.rows; y++) {
+			for(int x = 0; x < this.cols; x++) {
+				if(this.getMap()[y][x] == '.') {
+					coins++;
+				}
+			}
+		}
+		return coins;
+	}	
 	
-	/**
-	 * Reads the lines of a file and converts them into a string array.
-	 *
-	 * @param filename The path to the file to read.
-	 * @return A string array where each element is a line from the file.
-	 * @throws RuntimeException If an IOException occurs while reading the file.
-	 */
-	public static String[] readLevel(String filename) {
+
+	public String[] readLevel(String filename) {
         try {
             Path path = Paths.get(filename);
             
@@ -80,214 +84,145 @@ public class Level {
             return lines.toArray(new String[0]);
             
         } catch (IOException e) {
-            System.err.println("Erreur fatale : Impossible de lire le fichier " + filename);
+            System.err.println("Fatal error : Impossible to read file " + filename);
             e.printStackTrace();
             
-            throw new RuntimeException("Arrêt du programme : Fichier niveau introuvable.");
+            throw new RuntimeException("Program Stopped : File not found.");
         }
     }
 	
-	/**
-	 * Checks if the game is currently running.
-	 *
-	 * @return true if the game is on, false otherwise.
-	 */
-	public boolean getGameOn() { return this.gameOn; }
+	public int getNumberOfCoins() { return this.numberOfCoins; }
 	
-	/**
-	 * Sets the running state of the game.
-	 *
-	 * @param state The new state of the game (true for running, false for stopped).
-	 */
+	public void setNumberOfCoins(int coins) {
+		if(coins >= 0) {
+			this.numberOfCoins = coins;
+		} else {
+			this.numberOfCoins = 0;
+		}
+	}
+
+	public boolean getGameOn() { return this.gameOn; }
+
 	public void setGameOn(boolean state) {
 		this.gameOn = state;
 	}
 	
-	/**
-	 * Returns the total number of Level instances created.
-	 *
-	 * @return The number of levels.
-	 */
 	public static int getNumberOfLevels() { return numberOfLevels; }
 	
-	/**
-	 * Gets the number of rows in the map.
-	 *
-	 * @return The number of rows.
-	 */
 	public int getRows() { return this.rows; }
 	
-	/**
-	 * Gets the number of columns in the map.
-	 *
-	 * @return The number of columns.
-	 */
 	public int getCols() { return this.cols; }
 	
-	/**
-	 * Gets the 2D character array representing the map.
-	 *
-	 * @return The map grid.
-	 */
 	public char[][] getMap() { return this.map; }
 	
-	/**
-	 * Gets the player associated with this level.
-	 *
-	 * @return The Player object.
-	 */
-	public Player getPlayer() { return this.player; }
-	
-	/**
-	 * Returns a string representation of the level.
-	 *
-	 * @return A string like "LevelN".
-	 */
-	@Override
-	public String toString() {
-		return "Level" + (getNumberOfLevels());
+	public void setMap(String[] stringMap) {
+		this.map = new char[this.getRows()][this.getCols()];		
+		for (int i = 0; i < this.rows; i++) {
+	        this.map[i] = stringMap[i].toCharArray();
+	    }
+		
 	}
 
-	/**
-	 * Displays the current state of the level and player to the console.
-	 * Prints the player status and the map grid.
-	 */
+	public Player getPlayer() { return this.player; }
+	
+	public int[] getInitialPosition() { return this.initialPosition.clone(); }
+
+	@Override
+	public String toString() {
+		return "Level" + (getNumberOfLevels() + " Coins: " + this.getNumberOfCoins());
+	}
+
 	public void show() {
-		System.out.println(this.player + " --- " + this);
-		for(int i = 0; i < this.rows; i++) {
-            for(int j = 0; j < this.cols; j++) {
-                System.out.print(this.map[i][j]);
+		System.out.println(this.getPlayer() + " --- " + this);
+		for(int i = 0; i < this.getRows(); i++) {
+            for(int j = 0; j < this.getCols(); j++) {
+                System.out.print(this.getMap()[i][j]);
             }
             System.out.println(); 
         }
 	}
 	
-	/**
-	 * Checks if a proposed move is valid.
-	 * A move is valid if it is within bounds and doesn't hit a wall ('#').
-	 *
-	 * @param y The vertical displacement.
-	 * @param x The horizontal displacement.
-	 * @return true if the move is valid, false otherwise.
-	 */
-	public boolean checkMoveValidity(int y, int x) {
-		return (this.getMap()[this.getPlayer().getPosition()[0] + y][this.getPlayer().getPosition()[1]+x] != '#' && 
-        		( (this.getPlayer().getPosition()[1] + x ) >= 0 && this.getCols() > (this.getPlayer().getPosition()[1] + x) ) && 
-        		( (this.getPlayer().getPosition()[0] + y ) >= 0 && this.getRows() > (this.getPlayer().getPosition()[0] + y) ));
+	public boolean isWall(int y, int x) {
+		return (this.getMap()[y][x] == '#');
 	}
-	
-	/**
-	 * Updates the game state based on a player's move.
-	 * If the move is valid, updates the player position and the map grid visual.
-	 * Finally, displays the updated state.
-	 *
-	 * @param y The vertical displacement.
-	 * @param x The horizontal displacement.
-	 */
-	public void update(int y, int x) {
+
+	public boolean checkMoveValidity(int y, int x) {
+		return (!this.isWall(this.getPlayer().getPosition()[0] + y, this.getPlayer().getPosition()[1] + x) && 
+        		( (this.getPlayer().getPosition()[1] + x ) >= 0 && (this.getPlayer().getPosition()[1] + x < this.getCols()) ) && 
+        		( (this.getPlayer().getPosition()[0] + y ) >= 0 && (this.getPlayer().getPosition()[0] + y < this.getRows()) )); 
+	}
+
+	public void update() {
+		int move[] = this.getInputKey();
+		int y = move[0];
+		int x = move[1];
 		if(this.checkMoveValidity(y,x)) {
-			this.map[this.player.getPosition()[0]][this.player.getPosition()[1]] = ' ';
-			this.map[this.player.getPosition()[0] + y][this.player.getPosition()[1] + x] = String.valueOf(Player.getNumberOfPlayers()).charAt(0);
-			this.player.move(y, x);
+			this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = ' ';
+			this.getPlayer().move(y, x);
+			if(this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] == '.') {
+				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = this.player.getName().charAt(0);
+				this.getPlayer().setScore(this.getPlayer().getScore() + 10);
+				this.setNumberOfCoins(this.getNumberOfCoins() - 1);
+			} else if(this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] == '*') {
+				this.getPlayer().setLives(this.getPlayer().getLives() - 2);
+				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = ' ';
+				this.getPlayer().setPosition(this.getInitialPosition());
+				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = this.player.getName().charAt(0);
+			} else {
+				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = this.player.getName().charAt(0);
+
+			}			
 		}
-		System.out.println("---" + this + "--- " + this.player);
 		this.show();
 	}
-	
-	/**
-	 * Captures keyboard input to control player movement.
-	 * Supports 'z' (up), 's' (down), 'q' (left), 'd' (right).
-	 */
-	public void getInputKey() {
+
+	public int[] getInputKey() {
 		Scanner myScanner = new Scanner(System.in);
 		int[] move = {0, 0};
 		char key = String.valueOf(myScanner.nextLine()).charAt(0);
 		switch (key){
 			case 'q':
-				move[1] = -1;
-				move[0] = 0;
+				move = this.left.getMovement();
 				break;
 			case 'z':
-				move[1] = 0;
-				move[0] = -1;
+				move = this.up.getMovement();
 				break;
 			case 'd':
-				move[1] = 1;
-				move[0] = 0;
+				move = this.right.getMovement();
 				break;
 			case 's':
-				move[1] = 0;
-				move[0] = 1;
+				move = this.down.getMovement();
+				break;
+			default:
 				break;
 		}
-		this.update(move[0], move[1]);
+		myScanner = null;
+		return move;
 	}
 
-	/**
-	 * Main method to run the level logic.
-	 * Loads a level file and enters the game loop.
-	 *
-	 * @param args Command line arguments (not used).
-	 */
 	public static void main(String[] args) {
-		/*
-		 * String[] lines = {
-		        "########################################",
-		        "#                  #                   #",
-		        "#    ######        #     ###   ###     #",
-		        "#    #             #     #       #     #",
-		        "#    #                   #       #     #",
-		        "#    ######        #     #########     #",
-		        "#       #          #                   #",
-		        "#       ############                   #",
-		        "#                                      #",
-		        "#    #######   ###### #####   #####    #",
-		        "#          #   #          #   #        #",
-		        "#          #   #          #   #        #",
-		        "#    #######   #          #   #####    #",
-		        "#              #          #            #",
-		        "########################################"
-		    };
-		 */
 
-
-		try {
-            Level level = new Level("./src/generation/level2.txt");
-			/*
-             * 
-             * Manual movements in all 4 directions 
-             * 
-            // Move to left if possible
-        	level1.update(0, -1);
-        	System.out.println("Moved Left");
-
-            // Move to top if possible
-        	level1.update(-1, 0);
-        	System.out.println("Moved Up");
-
-            // Move to right if possible
-        	level1.update(0, 1);
-        	System.out.println("Moved Right");
-            
-            // Move down if possible
-        	level1.update(1, 0);
-        	System.out.println("Moved Down");
-			*/
-            
-            level.show();
-            while(level.getGameOn()) {
-            	TimeUnit.SECONDS.sleep(1);
-            	level.getInputKey();
-            	
-            }
-            
-              
-        } catch (Exception e) {
-            System.err.println("Placement error : " + e.getMessage());
-            System.err.println(e.getLocalizedMessage());
-        }
-        
 		
 	}
+	/*
+	 * if(this.getMap()[this.getPlayer().getPosition()[0] + y][this.getPlayer().getPosition()[1] + x] == '.') {
+				this.getPlayer().setScore(this.getPlayer().getScore() + 10);
+				this.setNumberOfCoins(this.getNumberOfCoins() - 1);
+				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = ' ';
+				this.getMap()[this.getPlayer().getPosition()[0] + y][this.getPlayer().getPosition()[1] + x] = String.valueOf(Player.getNumberOfPlayers()).charAt(0);
+				this.getPlayer().move(y, x);
+			} else if(this.getMap()[this.getPlayer().getPosition()[0] + y][this.getPlayer().getPosition()[1] + x] == '*') {
+				this.getPlayer().setLives(this.getPlayer().getLives() - 2);
+				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = ' ';
+				this.getMap()[this.getPlayer().getPosition()[0]+y][this.getPlayer().getPosition()[1]+x] = ' ';
+				this.getPlayer().setPosition(this.getInitialPosition());
+				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = String.valueOf(Player.getNumberOfPlayers()).charAt(0);
+				
+			} else {
+				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = ' ';
+				this.getMap()[this.getPlayer().getPosition()[0] + y][this.getPlayer().getPosition()[1] + x] = String.valueOf(Player.getNumberOfPlayers()).charAt(0);
+				this.getPlayer().move(y, x);
+			}
+	 * */
 
 }
