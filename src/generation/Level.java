@@ -294,25 +294,4 @@ public class Level {
 
 		
 	}
-	/*
-	 * if(this.getMap()[this.getPlayer().getPosition()[0] + y][this.getPlayer().getPosition()[1] + x] == '.') {
-				this.getPlayer().setScore(this.getPlayer().getScore() + 10);
-				this.setNumberOfCoins(this.getNumberOfCoins() - 1);
-				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = ' ';
-				this.getMap()[this.getPlayer().getPosition()[0] + y][this.getPlayer().getPosition()[1] + x] = String.valueOf(Player.getNumberOfPlayers()).charAt(0);
-				this.getPlayer().move(y, x);
-			} else if(this.getMap()[this.getPlayer().getPosition()[0] + y][this.getPlayer().getPosition()[1] + x] == '*') {
-				this.getPlayer().setLives(this.getPlayer().getLives() - 2);
-				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = ' ';
-				this.getMap()[this.getPlayer().getPosition()[0]+y][this.getPlayer().getPosition()[1]+x] = ' ';
-				this.getPlayer().setPosition(this.getInitialPosition());
-				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = String.valueOf(Player.getNumberOfPlayers()).charAt(0);
-				
-			} else {
-				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = ' ';
-				this.getMap()[this.getPlayer().getPosition()[0] + y][this.getPlayer().getPosition()[1] + x] = String.valueOf(Player.getNumberOfPlayers()).charAt(0);
-				this.getPlayer().move(y, x);
-			}
-	 * */
-
 }
