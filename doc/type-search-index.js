@@ -1,1 +1,1 @@
-typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"game","l":"Game"},{"p":"generation","l":"Level"},{"p":"generation","l":"Level.Movement"},{"p":"generation","l":"Player"}];updateSearchResults();
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"game","l":"Game"}];updateSearchResults();
