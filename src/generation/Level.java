@@ -12,33 +12,11 @@ import java.io.IOException;
 public class Level {
 	private int rows;
 	private int cols;
-	private char[][] map;
+	private Cell[][] map;
 	private Player player;
 	private int[] initialPosition = new int[2];
-	private Random rand = new Random();
 	private static int numberOfLevels = 0;
-	private boolean gameOn = true;
 	private int numberOfCoins;
-	
-	/**
-	 * Enum representing possible movement directions.
-	 */
-	private enum Movement{
-		UP(-1, 0), DOWN(1, 0), RIGHT(0,1), LEFT(0, -1);
-		private int y, x;
-		private Movement(int y, int x) {
-			this.y = y;
-			this.x = x;
-		}
-		
-		public int[] getMovement() { return new int[]{this.y, this.x}; }
-		
-	}	
-	
-	private Movement up = Movement.UP;
-	private Movement down = Movement.DOWN;
-	private Movement right = Movement.RIGHT;
-	private Movement left = Movement.LEFT;
 	
 	
 	/**
@@ -47,7 +25,7 @@ public class Level {
 	 * @param filename Path to the level configuration file.
 	 * @param name Name of the player.
 	 */
-	public Level(String filename, String name) {
+	public Level(String filename, Player player) {
 		
 		numberOfLevels++;
 		String[] stringMap = readLevel(filename);
@@ -58,18 +36,18 @@ public class Level {
 		int x;
 		int y;
 		boolean verif;
+		Random rand = new Random();
+
 		do {
 			y = rand.nextInt(this.rows);
 			x = rand.nextInt(this.cols);
-			verif = this.map[y][x] != ' ';
+			verif = !this.map[y][x].getType().equals("empty");
 		} while(verif);
 		
 		this.initialPosition[0] = y;
 		this.initialPosition[1] = x;
-		this.player = new Player(this.initialPosition.clone(), name);
-		
-		this.map[y][x] = this.player.getName().charAt(0);
-		
+		this.player = player;
+		this.player.setPosition(initialPosition.clone());
 		this.numberOfCoins = this.countCoins();
 		
 	}
@@ -78,11 +56,11 @@ public class Level {
 	 * Counts the number of coins present in the map.
 	 * @return The total number of coins.
 	 */
-	public int countCoins() {
+	private int countCoins() {
 		int coins = 0;
 		for(int y = 0; y < this.rows; y++) {
 			for(int x = 0; x < this.cols; x++) {
-				if(this.getMap()[y][x] == '.') {
+				if(this.getMap()[y][x].getHasCoin()) {
 					coins++;
 				}
 			}
@@ -97,7 +75,7 @@ public class Level {
 	 * @return An array of strings representing the map rows.
 	 * @throws RuntimeException if the file cannot be read.
 	 */
-	public String[] readLevel(String filename) {
+	private String[] readLevel(String filename) {
         try {
             Path path = Paths.get(filename);
             
@@ -132,20 +110,6 @@ public class Level {
 	}
 
 	/**
-	 * Checks if the level is currently active.
-	 * @return true if the level is active.
-	 */
-	public boolean getGameOn() { return this.gameOn; }
-
-	/**
-	 * Sets the level active state.
-	 * @param state The new state.
-	 */
-	public void setGameOn(boolean state) {
-		this.gameOn = state;
-	}
-	
-	/**
 	 * Gets the total number of levels created.
 	 * @return The number of levels.
 	 */
@@ -165,19 +129,28 @@ public class Level {
 	
 	/**
 	 * Gets the map grid.
-	 * @return The 2D char array representing the map.
+	 * @return The 2D {@link Cell} array representing the map.
 	 */
-	public char[][] getMap() { return this.map; }
+	public Cell[][] getMap() { return this.map; }
 	
 	/**
 	 * Initializes the map from string array.
 	 * @param stringMap Array of strings representing rows.
 	 */
 	public void setMap(String[] stringMap) {
-		this.map = new char[this.getRows()][this.getCols()];		
+		this.map = new Cell[this.getRows()][this.getCols()];		
 		for (int i = 0; i < this.rows; i++) {
-	        this.map[i] = stringMap[i].toCharArray();
-	    }
+			for (int j = 0; j < stringMap[i].length(); j++) {
+				char c = stringMap[i].charAt(j);
+				switch (c) {
+					case '#' -> this.map[i][j] = new Wall(new int[] {i, j});
+					case 'D' -> this.map[i][j] = new LockedDoor(new int[] {i, j}, "password");
+					case '.' -> this.map[i][j] = new Cell(new int[]{i, j}, "empty", true);
+					case '*' -> this.map[i][j] = new Cell(new int[]{i, j}, "trap", false);
+					default  -> this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
+				}
+			}
+		}
 		
 	}
 
@@ -193,45 +166,53 @@ public class Level {
 	 */
 	public int[] getInitialPosition() { return this.initialPosition.clone(); }
 
+	/**
+	 * Returns a full string representation of the level for console display.
+	 * Includes player stats, level info, and the map with the player's position overlaid.
+	 * @return A multi-line string representing the current level state.
+	 */
 	@Override
 	public String toString() {
-		return "Level" + (getNumberOfLevels() + " Coins: " + this.getNumberOfCoins());
-	}
-
-	/**
-	 * Displays the current state of the level to the console.
-	 */
-	public void show() {
-		System.out.println(this.getPlayer() + " --- " + this);
+		String show = "";
+		show += this.getPlayer() + "---" + "Level " + (getNumberOfLevels()) + " Coins: " + this.getNumberOfCoins() + "\n";
+		int[] playerPos = this.getPlayer().getPosition();
 		for(int i = 0; i < this.getRows(); i++) {
             for(int j = 0; j < this.getCols(); j++) {
-                System.out.print(this.getMap()[i][j]);
+            	if(i == playerPos[0] && j == playerPos[1]) {
+            		show += this.getPlayer().getName().charAt(0);
+            	} else {
+            		Cell cell = this.getMap()[i][j];
+            		show += cell;
+            	}
             }
-            System.out.println(); 
-        }
-	}
-	
-	/**
-	 * Checks if a specific coordinate is a wall.
-	 * @param y Row index.
-	 * @param x Column index.
-	 * @return true if the coordinate is a wall '#'.
-	 */
-	public boolean isWall(int y, int x) {
-		return (this.getMap()[y][x] == '#');
+            show += "\n";
+		}
+		return show;
 	}
 
 	/**
-	 * Validates if a move is possible.
-	 * Checks boundaries and walls.
-	 * @param y Vertical movement delta.
-	 * @param x Horizontal movement delta.
-	 * @return true if the move is valid.
+	 * Validates whether a move is possible from the player's current position.
+	 * Handles map wrapping at boundaries and blocks movement into walls.
+	 * @param move The {@link Movement} direction to validate.
+	 * @return {@code true} if the destination cell is not a wall, {@code false} otherwise.
 	 */
-	public boolean checkMoveValidity(int y, int x) {
-		return (!this.isWall(this.getPlayer().getPosition()[0] + y, this.getPlayer().getPosition()[1] + x) && 
-        		( (this.getPlayer().getPosition()[1] + x ) >= 0 && (this.getPlayer().getPosition()[1] + x < this.getCols()) ) && 
-        		( (this.getPlayer().getPosition()[0] + y ) >= 0 && (this.getPlayer().getPosition()[0] + y < this.getRows()) )); 
+	private boolean checkMoveValidity(Movement move) {
+		int y = move.getMovement()[0];
+		int x = move.getMovement()[1];
+		Cell nextCell;
+		if(this.getPlayer().getPosition()[0] + y > this.getRows() - 1) {
+			nextCell = this.getMap()[0][this.getPlayer().getPosition()[1]];
+		} else if(this.getPlayer().getPosition()[0] + y < 0) {
+			nextCell = this.getMap()[this.getRows() - 1][this.getPlayer().getPosition()[1]];
+		} else if(this.getPlayer().getPosition()[1] + x > this.getCols() - 1) {
+			nextCell = this.getMap()[this.getPlayer().getPosition()[0]][0];
+		}  else if(this.getPlayer().getPosition()[1] + x < 0) {
+			nextCell = this.getMap()[this.getPlayer().getPosition()[0]][this.getCols() - 1];
+		} else {
+			nextCell = this.getMap()[this.getPlayer().getPosition()[0] + y][this.getPlayer().getPosition()[1] + x];
+		}
+		return (!nextCell.getType().equals("wall"));
+
 	}
 
 	/**
@@ -239,59 +220,53 @@ public class Level {
 	 * Handles movement, scoring, and collisions.
 	 */
 	public void update() {
-		int move[] = this.getInputKey();
-		int y = move[0];
-		int x = move[1];
-		if(this.checkMoveValidity(y,x)) {
-			this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = ' ';
-			this.getPlayer().move(y, x);
-			if(this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] == '.') {
-				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = this.player.getName().charAt(0);
+		Movement move = this.getInputKey();
+		if(this.checkMoveValidity(move)) {
+			
+			this.getPlayer().move(move, this.getMap());
+			Cell dest = this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]];
+			
+			if(dest.getHasCoin()) {
+				// Recolt the coin
+				this.map[dest.getPosition()[0]][dest.getPosition()[1]] = new Cell(dest.getPosition(), "empty", false);
 				this.getPlayer().setScore(this.getPlayer().getScore() + 10);
 				this.setNumberOfCoins(this.getNumberOfCoins() - 1);
-			} else if(this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] == '*') {
-				this.getPlayer().setLives(this.getPlayer().getLives() - 2);
-				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = ' ';
+				
+			} else if(dest.getType().equals("trap")) {
+				// Fell in trap
 				this.getPlayer().setPosition(this.getInitialPosition());
-				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = this.player.getName().charAt(0);
-			} else {
-				this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]] = this.player.getName().charAt(0);
-
-			}			
+				this.getPlayer().setLives(this.getPlayer().getLives() - 2);
+			} 	
 		}
-		this.show();
+		
+		System.out.println(this);
 	}
 
 	/**
-	 * Captures player input for movement.
-	 * @return An array {y, x} representing the movement direction.
+	 * Reads a single character from stdin and maps it to a {@link Movement} direction.
+	 * Keys: 'z' = UP, 's' = DOWN, 'q' = LEFT, 'd' = RIGHT. Any other key yields NONE.
+	 * @return The {@link Movement} corresponding to the key pressed.
 	 */
-	public int[] getInputKey() {
+	private Movement getInputKey() {
 		Scanner myScanner = new Scanner(System.in);
-		int[] move = {0, 0};
-		char key = String.valueOf(myScanner.nextLine()).charAt(0);
+		char key = String.valueOf(myScanner.next()).charAt(0);
 		switch (key){
 			case 'q':
-				move = this.left.getMovement();
-				break;
+				return Movement.LEFT;
 			case 'z':
-				move = this.up.getMovement();
-				break;
+				return Movement.UP;
 			case 'd':
-				move = this.right.getMovement();
-				break;
+				return Movement.RIGHT;
 			case 's':
-				move = this.down.getMovement();
-				break;
+				return Movement.DOWN;
 			default:
-				break;
+				return Movement.NONE;
 		}
-		myScanner = null;
-		return move;
 	}
 
-	public static void main(String[] args) {
-
-		
-	}
+	/**
+	 * Entry point for testing the Level class independently.
+	 * @param args Command line arguments (unused).
+	 */
+	public static void main(String[] args) {}
 }

@@ -1,13 +1,13 @@
 package game;
 import java.util.concurrent.TimeUnit;
+import java.lang.IllegalArgumentException;
 import java.util.Scanner;
 
 import generation.*;
 
 /**
  * Main game class that manages the game loop and level transitions.
- * @author Abdelhamid AKHATAR
- * @email abdelhamid.akhatar@etu.cyu.fr
+ * @author Abdelhamid AKHATAR <abdelhamid.akhatar@etu.cyu.fr>
  */
 public class Game {
 
@@ -15,17 +15,20 @@ public class Game {
 	private String[] levels;
 	private int index = 0;
 	private Level level;
-	private String name;
+	private Player player;
 
 	/**
 	 * Constructs a new Game instance.
 	 * @param args Array of level file paths.
 	 * @param name The name of the player.
 	 */
-	public Game(String[] args, String name){
+	public Game(String[] args, String name) throws IllegalArgumentException{
+		if(args.length == 0) {
+			throw new IllegalArgumentException("Veuillez saisir au moins 1 fichier de niveau en argument");
+		}
 		this.levels = args.clone();
-		this.name = name;
-		this.level = new Level(this.levels[index], name);
+		this.player = new Player(new int[] {0,0}, name, 5);
+		this.level = new Level(this.levels[index], player);
 	}
 
 	/**
@@ -50,12 +53,8 @@ public class Game {
 	 */
 	public void nextLevel() {
 		this.index++;
-		int[] stats = {this.level.getPlayer().getScore(), this.level.getPlayer().getLives()};
-		this.level = null;
-		this.level = new Level(this.levels[this.index], this.name);
-		this.level.getPlayer().setScore(stats[0]);
-		this.level.getPlayer().setLives(stats[1]);
-		this.level.show();
+		this.level = new Level(this.levels[this.index], this.player);
+		System.out.println(this.level);
 	}
 
 	
@@ -71,7 +70,7 @@ public class Game {
 			name = myScanner.next();
 			Game game = new Game(args, name);
 			String answer;
-			game.level.show();
+			System.out.println(game.level);
             while(game.getGameOn()) {
             	TimeUnit.MILLISECONDS.sleep(500);
             	game.level.update();
@@ -80,9 +79,8 @@ public class Game {
             		System.out.print("Do you want to try again ? (yes/no) ");
             		answer = myScanner.next();
             		if(answer.equals("yes")) {
-            			game = null;
             			game = new Game(args, name);
-            			game.level.show();
+            			System.out.println(game.level);
             		} else {
             			game.setGameOn(false);
             		}
@@ -100,7 +98,8 @@ public class Game {
             }
             
 		} catch (Exception e) {
-            System.err.println(e.getMessage());            
+            System.err.println(e);   
+            e.printStackTrace();
         }
 	}
 

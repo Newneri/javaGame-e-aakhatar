@@ -16,11 +16,21 @@ public class Player {
 	 * @param position Initial coordinates {y, x}.
 	 * @param name The player's name.
 	 */
-	public Player(int[] position, String name) { 
+	public Player(int[] position, String name, int lives) { 
 		this.position = position;
 		this.score = 0;
-		this.lives = 5;
+		this.lives = lives;
 		this.name = name;
+		numberOfPlayers++;
+	}
+	
+	/**
+	 * Constructs a new Player wtih default values.
+	 */
+	public Player() {
+		this.name = "Joueur" + (1+numberOfPlayers);
+		this.lives = 5;
+		this.score = 0;
 		numberOfPlayers++;
 	}
 
@@ -75,13 +85,26 @@ public class Player {
 	public int[] getPosition() { return this.position; }
 
 	/**
-	 * Moves the player by a specified offset.
-	 * @param y Vertical offset.
-	 * @param x Horizontal offset.
+	 * Moves the player in the given direction, wrapping around map edges.
+	 * @param move The {@link Movement} direction to apply.
+	 * @param map The current level's cell grid, used to determine map boundaries.
 	 */
-	public void move(int y, int x) {
-		this.position[0] += y;
-		this.position[1] += x;
+	public void move(Movement move, Cell[][] map) {
+		int y = move.getMovement()[0];
+		int x = move.getMovement()[1];
+		
+		if(this.position[0] + y > map.length-1) {
+			this.position[0] = 0;
+		} else if(this.position[0] + y < 0) {
+			this.position[0] = map.length - 1;
+		} else if(this.position[1] + x > map[0].length -1) {
+			this.position[1] = 0;
+		} else if(this.position[1] + x < 0) {
+			this.position[1] = map[0].length - 1;
+		} else {
+			this.position[0] += y;
+			this.position[1] += x;
+		}
 	}
 
 	/**
