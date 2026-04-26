@@ -3,3 +3,5 @@ bin/
 .vscode/
 *.log
 .DS_Store
+.settings/
+.github/
