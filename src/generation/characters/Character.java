@@ -1,9 +1,12 @@
-package generation;
+package generation.characters;
+
+import generation.map.Cell;
+import generation.map.Movement;
 
 /**
  * Abstract base class for all characters in the game (player and enemies).
  * Holds common state: name, lives, current position, and initial spawn position.
- * @author Abdelhamid AKHATAR <abdelhamid.akhatar@etu.cyu.fr>
+ * @author Abdelhamid AKHATAR &lt;abdelhamid.akhatar@etu.cyu.fr&gt;
  */
 public abstract class Character {
 	/** Number of lives remaining. */

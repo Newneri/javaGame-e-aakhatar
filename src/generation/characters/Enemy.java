@@ -1,10 +1,12 @@
-package generation;
+package generation.characters;
 import java.util.Random;
+
+import generation.map.Movement;
 
 /**
  * Represents a basic enemy (Zombie) that moves randomly each turn.
  * Displayed as {@code R} on the map.
- * @author Abdelhamid AKHATAR <abdelhamid.akhatar@etu.cyu.fr>
+ * @author Abdelhamid AKHATAR &lt;abdelhamid.akhatar@etu.cyu.fr&gt;
  */
 public class Enemy extends Character {
 	/** Shared random generator available to subclasses for movement decisions. */

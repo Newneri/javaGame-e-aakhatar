@@ -1,11 +1,11 @@
-package generation;
+package generation.map;
 
 import java.util.Objects;
 
 /**
  * Represents a single cell in the game map grid.
  * A cell has a position, a type (e.g. "empty", "wall", "trap"), and may contain a coin.
- * @author Abdelhamid AKHATAR <abdelhamid.akhatar@etu.cyu.fr>
+ * @author Abdelhamid AKHATAR &lt;abdelhamid.akhatar@etu.cyu.fr&gt;
  */
 public class Cell {
 	/** Grid coordinates {row, col} of this cell. */

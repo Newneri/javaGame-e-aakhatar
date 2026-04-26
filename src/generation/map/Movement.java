@@ -1,9 +1,9 @@
-package generation;
+package generation.map;
 
 /**
  * Enum representing the possible movement directions for the player.
  * Each constant encodes a row offset (y) and a column offset (x).
- * @author Abdelhamid AKHATAR <abdelhamid.akhatar@etu.cyu.fr>
+ * @author Abdelhamid AKHATAR &lt;abdelhamid.akhatar@etu.cyu.fr&gt;
  */
 public enum Movement {
 	/** Move one row up (y = -1). */

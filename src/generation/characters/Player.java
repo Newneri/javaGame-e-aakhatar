@@ -1,9 +1,11 @@
-package generation;
+package generation.characters;
 import java.util.Scanner;
+
+import generation.map.Movement;
 
 /**
  * Represents a player in the game with score, lives, and position.
- * @author Abdelhamid AKHATAR <abdelhamid.akhatar@etu.cyu.fr>
+ * @author Abdelhamid AKHATAR &lt;abdelhamid.akhatar@etu.cyu.fr&gt;
  */
 public class Player extends Character{
 	private int score;
@@ -14,6 +16,7 @@ public class Player extends Character{
 	 * Constructs a new Player.
 	 * @param position Initial coordinates {y, x}.
 	 * @param name The player's name.
+	 * @param lives The starting number of lives.
 	 */
 	public Player(int[] position, String name, int lives) { 
 		super(name, lives, position);

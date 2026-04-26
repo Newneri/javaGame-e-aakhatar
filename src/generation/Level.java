@@ -1,5 +1,16 @@
 package generation;
 import java.util.Random;
+
+import generation.characters.Character;
+import generation.characters.Enemy;
+import generation.characters.Ghost;
+import generation.characters.Hunter;
+import generation.characters.Player;
+import generation.map.Cell;
+import generation.map.LockedDoor;
+import generation.map.Movement;
+import generation.map.Wall;
+
 import java.nio.file.*;
 import java.util.List;
 import java.util.ArrayList;
@@ -8,7 +19,7 @@ import java.io.IOException;
 
 /**
  * Represents a game level, managing the map, player movement, and game rules.
- * @author Abdelhamid AKHATAR <abdelhamid.akhatar@etu.cyu.fr>
+ * @author Abdelhamid AKHATAR &lt;abdelhamid.akhatar@etu.cyu.fr&gt;
  */
 public class Level {
 	private int rows;
@@ -25,7 +36,7 @@ public class Level {
 	 * Constructs a new Level from a file.
 	 * Randomly places the player on a valid empty spot.
 	 * @param filename Path to the level configuration file.
-	 * @param name Name of the player.
+	 * @param player The player to place in this level.
 	 */
 	public Level(String filename, Player player) {
 		
@@ -167,6 +178,12 @@ public class Level {
 						this.getEnemies().add(new Ghost("Ghost" + this.getEnemies().size(), 1, new int[]{i,j}));
 						this.occupiedCells.add(this.map[i][j]);
 					}
+					case 'C' -> {
+						this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
+						this.getEnemies().add(new Hunter("Hunter" + this.getEnemies().size(), 3, new int[]{i,j}));
+						this.occupiedCells.add(this.map[i][j]);
+
+					}
 					default  -> this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
 				}
 			}
@@ -223,7 +240,9 @@ public class Level {
             	} else if(this.isEnemyAt(i, j)) {
             		if(this.getEnemyAt(i, j) instanceof Ghost) {
             			show += 'G';
-            		} else {
+            		} else if (this.getEnemyAt(i, j) instanceof Hunter){
+            			show += 'C';
+            		} else{
             			show += 'R';
             		}
             	} else {
@@ -286,19 +305,9 @@ public class Level {
 		Movement move = this.getPlayer().chooseMovement();
 		for(Enemy enemy: this.getEnemies()) {
 			if(enemy instanceof Ghost) {
-				if(enemy.getPosition()[0] == this.getPlayer().getPosition()[0]) {
-					if(enemy.getPosition()[1] > this.getPlayer().getPosition()[1]) {
-						((Ghost) enemy).setDirection(Movement.LEFT);
-					} else {
-						((Ghost) enemy).setDirection(Movement.RIGHT);
-					}
-				} else if(enemy.getPosition()[1] == this.getPlayer().getPosition()[1]) {
-					if(enemy.getPosition()[0] > this.getPlayer().getPosition()[0]) {
-						((Ghost) enemy).setDirection(Movement.UP);
-					} else {
-						((Ghost) enemy).setDirection(Movement.DOWN);
-					}
-				}
+				((Ghost) enemy).setTarget(this.getPlayer());
+			} else if(enemy instanceof Hunter) {
+				((Hunter) enemy).setTarget(this.getPlayer(), this.getMap());
 			}
 			Movement moveEnemy = enemy.chooseMovement();
 			if(enemy instanceof Ghost || this.checkMoveValidity(moveEnemy, enemy, false)) {
@@ -328,8 +337,12 @@ public class Level {
 		}
 		
 		if(this.isEnemyAt(this.getPlayer().getPosition()[0], this.getPlayer().getPosition()[1])) {
-			// Collision with enemy -> reset enemies positions and player loses 1 life
-			this.getPlayer().setLives(this.getPlayer().getLives() - 1);
+			// Collision with enemy -> reset enemies positions and player loses 1 life (if normal enemy) or 2 lifes (if hunter type)
+			if(this.getEnemyAt(this.getPlayer().getPosition()[0], this.getPlayer().getPosition()[1]) instanceof Hunter) {
+				this.getPlayer().setLives(this.getPlayer().getLives() - 2);
+			} else {				
+				this.getPlayer().setLives(this.getPlayer().getLives() - 1);
+			}
 			System.out.println(this.getPlayer().getName() + " collided with " + this.getEnemyAt(this.getPlayer().getPosition()[0], this.getPlayer().getPosition()[1]).getName());
 			this.resetEnemies();
 		}

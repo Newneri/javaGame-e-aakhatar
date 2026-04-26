@@ -1,9 +1,9 @@
-package generation;
+package generation.map;
 
 /**
  * Represents a locked door cell in the game map.
  * A locked door acts as a wall until it is unlocked with the correct key.
- * @author Abdelhamid AKHATAR <abdelhamid.akhatar@etu.cyu.fr>
+ * @author Abdelhamid AKHATAR &lt;abdelhamid.akhatar@etu.cyu.fr&gt;
  */
 public class LockedDoor extends Wall {
 	/** Whether this door is currently locked. */

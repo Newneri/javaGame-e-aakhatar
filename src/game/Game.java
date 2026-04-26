@@ -4,10 +4,11 @@ import java.lang.IllegalArgumentException;
 import java.util.Scanner;
 
 import generation.*;
+import generation.characters.Player;
 
 /**
  * Main game class that manages the game loop and level transitions.
- * @author Abdelhamid AKHATAR <abdelhamid.akhatar@etu.cyu.fr>
+ * @author Abdelhamid AKHATAR &lt;abdelhamid.akhatar@etu.cyu.fr&gt;
  */
 public class Game {
 
@@ -82,9 +83,9 @@ public class Game {
             			game = new Game(args, name);
             			System.out.println(game.level);
             		} else {
+            			System.out.println("Okey, see you !");
             			game.setGameOn(false);
             		}
-            		
             	}
             	if(game.level.getNumberOfCoins() == 0) {
             		System.out.println("LEVEL FINISHED");
