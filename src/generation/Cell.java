@@ -1,5 +1,7 @@
 package generation;
 
+import java.util.Objects;
+
 /**
  * Represents a single cell in the game map grid.
  * A cell has a position, a type (e.g. "empty", "wall", "trap"), and may contain a coin.
@@ -69,5 +71,19 @@ public class Cell {
 		} else {
 			return " ";
 		}
+	}
+	
+	@Override 
+	public int hashCode() {
+		return Objects.hash(this.position[0], this.position[1]);
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(obj instanceof Cell) {
+			Cell cell = (Cell) obj;
+			return(cell.getPosition()[0] == this.getPosition()[0] && cell.getPosition()[1] == this.getPosition()[1]);
+		}
+		return false;
 	}
 }

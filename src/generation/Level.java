@@ -1,8 +1,9 @@
 package generation;
 import java.util.Random;
-import java.util.Scanner;
 import java.nio.file.*;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.io.IOException;
 
 /**
@@ -14,7 +15,8 @@ public class Level {
 	private int cols;
 	private Cell[][] map;
 	private Player player;
-	private int[] initialPosition = new int[2];
+	private List<Enemy> enemies = new ArrayList<Enemy>();
+	private HashSet<Cell> occupiedCells = new HashSet<>();
 	private static int numberOfLevels = 0;
 	private int numberOfCoins;
 	
@@ -29,7 +31,7 @@ public class Level {
 		
 		numberOfLevels++;
 		String[] stringMap = readLevel(filename);
-		
+				
 		this.rows = stringMap.length;
 		this.cols = stringMap[0].length();
 		this.setMap(stringMap);
@@ -41,13 +43,13 @@ public class Level {
 		do {
 			y = rand.nextInt(this.rows);
 			x = rand.nextInt(this.cols);
-			verif = !this.map[y][x].getType().equals("empty");
+			verif = !this.map[y][x].getType().equals("empty") || this.isEnemyAt(y, x);
 		} while(verif);
 		
-		this.initialPosition[0] = y;
-		this.initialPosition[1] = x;
+		int[] initialPosition = {y, x};
 		this.player = player;
 		this.player.setPosition(initialPosition.clone());
+		this.player.setInitialPosition(initialPosition.clone());
 		this.numberOfCoins = this.countCoins();
 		
 	}
@@ -67,6 +69,14 @@ public class Level {
 		}
 		return coins;
 	}	
+	
+	/**
+	 * Gets the list of all enemies in this level.
+	 * @return The list of {@link Enemy} instances.
+	 */
+	public List<Enemy> getEnemies() {
+		return this.enemies;
+	}
 	
 
 	/**
@@ -146,7 +156,17 @@ public class Level {
 					case '#' -> this.map[i][j] = new Wall(new int[] {i, j});
 					case 'D' -> this.map[i][j] = new LockedDoor(new int[] {i, j}, "password");
 					case '.' -> this.map[i][j] = new Cell(new int[]{i, j}, "empty", true);
-					case '*' -> this.map[i][j] = new Cell(new int[]{i, j}, "trap", false);
+					case '*' -> this.map[i][j] = new Cell(new int[]{i, j}, "trap", false);	
+					case 'R' -> {
+						this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
+						this.getEnemies().add(new Enemy("Zombie" + this.getEnemies().size(), 1, new int[]{i,j}));
+						this.occupiedCells.add(this.map[i][j]);
+					}
+					case 'G' -> {
+						this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
+						this.getEnemies().add(new Ghost("Ghost" + this.getEnemies().size(), 1, new int[]{i,j}));
+						this.occupiedCells.add(this.map[i][j]);
+					}
 					default  -> this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
 				}
 			}
@@ -161,11 +181,31 @@ public class Level {
 	public Player getPlayer() { return this.player; }
 	
 	/**
-	 * Gets the initial spawn position of the player.
-	 * @return A copy of the initial position array.
+	 * Checks in O(1) whether any enemy occupies the cell at (i, j).
+	 * @param i The row index.
+	 * @param j The column index.
+	 * @return {@code true} if an enemy is on that cell, {@code false} otherwise.
 	 */
-	public int[] getInitialPosition() { return this.initialPosition.clone(); }
-
+	public boolean isEnemyAt(int i, int j) {
+		return this.occupiedCells.contains(this.getMap()[i][j]);
+	}
+	
+	/**
+	 * Returns the enemy at position (i, j), or {@code null} if none is present.
+	 * Used for display purposes to determine the enemy type (e.g. Ghost vs Zombie).
+	 * @param i The row index.
+	 * @param j The column index.
+	 * @return The {@link Enemy} at that position, or {@code null}.
+	 */
+	public Enemy getEnemyAt(int i, int j) {
+		for(Enemy enemy: this.getEnemies()) {
+			if(enemy.getPosition()[0] == i && enemy.getPosition()[1] == j) {
+				return enemy;
+			}
+		}
+		return null;
+	}
+	
 	/**
 	 * Returns a full string representation of the level for console display.
 	 * Includes player stats, level info, and the map with the player's position overlaid.
@@ -180,6 +220,12 @@ public class Level {
             for(int j = 0; j < this.getCols(); j++) {
             	if(i == playerPos[0] && j == playerPos[1]) {
             		show += this.getPlayer().getName().charAt(0);
+            	} else if(this.isEnemyAt(i, j)) {
+            		if(this.getEnemyAt(i, j) instanceof Ghost) {
+            			show += 'G';
+            		} else {
+            			show += 'R';
+            		}
             	} else {
             		Cell cell = this.getMap()[i][j];
             		show += cell;
@@ -191,28 +237,45 @@ public class Level {
 	}
 
 	/**
-	 * Validates whether a move is possible from the player's current position.
+	 * Validates whether a move is possible for a given character.
 	 * Handles map wrapping at boundaries and blocks movement into walls.
 	 * @param move The {@link Movement} direction to validate.
-	 * @return {@code true} if the destination cell is not a wall, {@code false} otherwise.
+	 * @param character The character attempting the move.
+	 * @param canGoOnTrap {@code true} if the character is allowed to step on traps (player only).
+	 * @return {@code true} if the destination is reachable, {@code false} otherwise.
 	 */
-	private boolean checkMoveValidity(Movement move) {
+	private boolean checkMoveValidity(Movement move, Character character, Boolean canGoOnTrap) {
 		int y = move.getMovement()[0];
 		int x = move.getMovement()[1];
 		Cell nextCell;
-		if(this.getPlayer().getPosition()[0] + y > this.getRows() - 1) {
-			nextCell = this.getMap()[0][this.getPlayer().getPosition()[1]];
-		} else if(this.getPlayer().getPosition()[0] + y < 0) {
-			nextCell = this.getMap()[this.getRows() - 1][this.getPlayer().getPosition()[1]];
-		} else if(this.getPlayer().getPosition()[1] + x > this.getCols() - 1) {
-			nextCell = this.getMap()[this.getPlayer().getPosition()[0]][0];
-		}  else if(this.getPlayer().getPosition()[1] + x < 0) {
-			nextCell = this.getMap()[this.getPlayer().getPosition()[0]][this.getCols() - 1];
+		if(character.getPosition()[0] + y > this.getRows() - 1) {
+			nextCell = this.getMap()[0][character.getPosition()[1]];
+		} else if(character.getPosition()[0] + y < 0) {
+			nextCell = this.getMap()[this.getRows() - 1][character.getPosition()[1]];
+		} else if(character.getPosition()[1] + x > this.getCols() - 1) {
+			nextCell = this.getMap()[character.getPosition()[0]][0];
+		}  else if(character.getPosition()[1] + x < 0) {
+			nextCell = this.getMap()[character.getPosition()[0]][this.getCols() - 1];
 		} else {
-			nextCell = this.getMap()[this.getPlayer().getPosition()[0] + y][this.getPlayer().getPosition()[1] + x];
+			nextCell = this.getMap()[character.getPosition()[0] + y][character.getPosition()[1] + x];
 		}
-		return (!nextCell.getType().equals("wall"));
-
+		if(canGoOnTrap) {
+			return (!nextCell.getType().equals("wall"));
+		} else {
+			return (!nextCell.getType().equals("wall") && !nextCell.getType().equals("trap"));
+		}
+	}
+	
+	/**
+	 * Resets all enemies to their initial positions and rebuilds the occupied cells set.
+	 * Called after the player collides with an enemy or falls into a trap.
+	 */
+	public void resetEnemies() {
+		for(Enemy enemy: this.getEnemies()) {
+			this.occupiedCells.remove(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
+			enemy.setPosition(enemy.getInitialPosition());
+			this.occupiedCells.add(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
+		}
 	}
 
 	/**
@@ -220,8 +283,32 @@ public class Level {
 	 * Handles movement, scoring, and collisions.
 	 */
 	public void update() {
-		Movement move = this.getInputKey();
-		if(this.checkMoveValidity(move)) {
+		Movement move = this.getPlayer().chooseMovement();
+		for(Enemy enemy: this.getEnemies()) {
+			if(enemy instanceof Ghost) {
+				if(enemy.getPosition()[0] == this.getPlayer().getPosition()[0]) {
+					if(enemy.getPosition()[1] > this.getPlayer().getPosition()[1]) {
+						((Ghost) enemy).setDirection(Movement.LEFT);
+					} else {
+						((Ghost) enemy).setDirection(Movement.RIGHT);
+					}
+				} else if(enemy.getPosition()[1] == this.getPlayer().getPosition()[1]) {
+					if(enemy.getPosition()[0] > this.getPlayer().getPosition()[0]) {
+						((Ghost) enemy).setDirection(Movement.UP);
+					} else {
+						((Ghost) enemy).setDirection(Movement.DOWN);
+					}
+				}
+			}
+			Movement moveEnemy = enemy.chooseMovement();
+			if(enemy instanceof Ghost || this.checkMoveValidity(moveEnemy, enemy, false)) {
+				this.occupiedCells.remove(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
+				enemy.move(moveEnemy, this.getMap());	
+				this.occupiedCells.add(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
+			}
+		}
+
+		if(this.checkMoveValidity(move, this.getPlayer(), true)) {
 			
 			this.getPlayer().move(move, this.getMap());
 			Cell dest = this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]];
@@ -233,35 +320,21 @@ public class Level {
 				this.setNumberOfCoins(this.getNumberOfCoins() - 1);
 				
 			} else if(dest.getType().equals("trap")) {
-				// Fell in trap
-				this.getPlayer().setPosition(this.getInitialPosition());
+				// Fell in trap -> reset player position and player loses 2 lives
+				this.getPlayer().setPosition(getPlayer().getInitialPosition());
 				this.getPlayer().setLives(this.getPlayer().getLives() - 2);
-			} 	
+				this.resetEnemies();
+			} 
+		}
+		
+		if(this.isEnemyAt(this.getPlayer().getPosition()[0], this.getPlayer().getPosition()[1])) {
+			// Collision with enemy -> reset enemies positions and player loses 1 life
+			this.getPlayer().setLives(this.getPlayer().getLives() - 1);
+			System.out.println(this.getPlayer().getName() + " collided with " + this.getEnemyAt(this.getPlayer().getPosition()[0], this.getPlayer().getPosition()[1]).getName());
+			this.resetEnemies();
 		}
 		
 		System.out.println(this);
-	}
-
-	/**
-	 * Reads a single character from stdin and maps it to a {@link Movement} direction.
-	 * Keys: 'z' = UP, 's' = DOWN, 'q' = LEFT, 'd' = RIGHT. Any other key yields NONE.
-	 * @return The {@link Movement} corresponding to the key pressed.
-	 */
-	private Movement getInputKey() {
-		Scanner myScanner = new Scanner(System.in);
-		char key = String.valueOf(myScanner.next()).charAt(0);
-		switch (key){
-			case 'q':
-				return Movement.LEFT;
-			case 'z':
-				return Movement.UP;
-			case 'd':
-				return Movement.RIGHT;
-			case 's':
-				return Movement.DOWN;
-			default:
-				return Movement.NONE;
-		}
 	}
 
 	/**

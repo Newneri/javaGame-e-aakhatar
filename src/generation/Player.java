@@ -1,15 +1,14 @@
 package generation;
+import java.util.Scanner;
 
 /**
  * Represents a player in the game with score, lives, and position.
  * @author Abdelhamid AKHATAR <abdelhamid.akhatar@etu.cyu.fr>
  */
-public class Player {
-	private String name;
+public class Player extends Character{
 	private int score;
-	private int lives;
-	private int[] position = {0, 0};
 	private static int numberOfPlayers = 0;
+	private Scanner myScanner = new Scanner(System.in);
 
 	/**
 	 * Constructs a new Player.
@@ -17,19 +16,7 @@ public class Player {
 	 * @param name The player's name.
 	 */
 	public Player(int[] position, String name, int lives) { 
-		this.position = position;
-		this.score = 0;
-		this.lives = lives;
-		this.name = name;
-		numberOfPlayers++;
-	}
-	
-	/**
-	 * Constructs a new Player wtih default values.
-	 */
-	public Player() {
-		this.name = "Joueur" + (1+numberOfPlayers);
-		this.lives = 5;
+		super(name, lives, position);
 		this.score = 0;
 		numberOfPlayers++;
 	}
@@ -39,30 +26,7 @@ public class Player {
 	 * @return The count of players.
 	 */
 	public static int getNumberOfPlayers() { return numberOfPlayers; }
-	
-	/**
-	 * Gets the current lives of the player.
-	 * @return The number of lives.
-	 */
-	public int getLives() { return this.lives; }
-	
-	/**
-	 * Sets the player's lives.
-	 * @param lives The new number of lives (maps negative values to 0).
-	 */
-	public void setLives(int lives) {
-		if(lives>=0) {
-			this.lives = lives;
-		} else {
-			this.lives = 0;
-		}
-	}
 
-	/**
-	 * Gets the player's name.
-	 * @return The name string.
-	 */
-	public String getName() { return this.name; }
 
 	/**
 	 * Gets the player's current score.
@@ -70,52 +34,40 @@ public class Player {
 	 */
 	public int getScore() { return this.score; }
 	
-	/**
-	 * Sets the player's position.
-	 * @param position An array {y, x}.
-	 */
-	public void setPosition(int[] position) {
-		this.position = position;
-	}
-
-	/**
-	 * Gets the player's current position.
-	 * @return The position reference {y, x}.
-	 */
-	public int[] getPosition() { return this.position; }
-
-	/**
-	 * Moves the player in the given direction, wrapping around map edges.
-	 * @param move The {@link Movement} direction to apply.
-	 * @param map The current level's cell grid, used to determine map boundaries.
-	 */
-	public void move(Movement move, Cell[][] map) {
-		int y = move.getMovement()[0];
-		int x = move.getMovement()[1];
-		
-		if(this.position[0] + y > map.length-1) {
-			this.position[0] = 0;
-		} else if(this.position[0] + y < 0) {
-			this.position[0] = map.length - 1;
-		} else if(this.position[1] + x > map[0].length -1) {
-			this.position[1] = 0;
-		} else if(this.position[1] + x < 0) {
-			this.position[1] = map[0].length - 1;
-		} else {
-			this.position[0] += y;
-			this.position[1] += x;
-		}
-	}
 
 	/**
 	 * Sets the player's score.
-	 * @param score The new score (ignored if <= 0).
+	 * @param score The new score (ignored if negative).
 	 */
 	public void setScore(int score) {
-		if(score > 0) {
+		if(score >= 0) {
 			this.score = score;
 		}
 	}
+
+	
+	/**
+	 * Reads a single character from stdin and maps it to a {@link Movement} direction.
+	 * Keys: 'z' = UP, 's' = DOWN, 'q' = LEFT, 'd' = RIGHT. Any other key yields NONE.
+	 * @return The {@link Movement} corresponding to the key pressed.
+	 */
+	@Override
+	public Movement chooseMovement() {
+		char key = String.valueOf(myScanner.next()).charAt(0);
+		switch (key){
+			case 'q':
+				return Movement.LEFT;
+			case 'z':
+				return Movement.UP;
+			case 'd':
+				return Movement.RIGHT;
+			case 's':
+				return Movement.DOWN;
+			default:
+				return Movement.NONE;
+		}
+	}
+
 
 	@Override
 	public String toString() {

@@ -1,0 +1,47 @@
+Summary of "Introduction to Object-Oriented Programming" Project
+
+The project is an educational exercise for an "Introduction to Object-Oriented Programming" course using Java. The overarching goal is to build a small 2D video game where a player navigates a level, fights enemies, and collects items.
+
+The project is structured into six progressive "Worlds" (Mondes), plus an additional debugging world, each introducing new gameplay features and programming concepts.
+
+### World 1: Player Modeling & Core OOP
+This world focuses on the basics of classes, objects, and state.
+* Level 1 & 2: Create a player character with a name and a score. Ensure the score never becomes negative and the name remains unmodifiable using encapsulation and private/final modifiers.
+* Level 3 & 4: Comment code and generate HTML documentation (javadoc). Implement a method to convert the player's data into a specific string format (e.g., "name: score pts").
+* Level 5 & 6: Test for equality between players based on their names using the `equals()` method. Use static attributes to globally track and display the total number of players created.
+
+### World 2: Levels, Movement & I/O
+This world introduces grids, loops, and user interaction.
+* Level 1 & 2: Build a level represented by a text-based grid where `#` represents walls and spaces represent empty areas. Place the player inside, using exceptions to handle invalid placements (like putting a player on a wall or out of bounds).
+* Level 3 & 4: Implement movement mechanics, allowing the player to move up, down, left, or right. Capture continuous keyboard input (ZQSD) to move the player while preventing them from walking through walls or outside the grid limits.
+* Level 5 & 6: Read the level layout from a properly formatted text file instead of hardcoding. Export the project as an executable `.jar` archive that takes the level text file as a command-line argument.
+
+### World 3: Gameplay Mechanics & State Management
+This phase turns the grid into a fully functioning game with win/loss conditions.
+* Level 1 & 2: Add collectible coins (`.`) that grant 10 points each. Add traps (`*`) that deduct 2 of the player's starting 5 lives. Reaching 0 lives triggers a "GAME OVER".
+* Level 3: Allow multiple levels to be passed as arguments and loaded sequentially. The player retains their score and lives across these levels.
+* Level 4, 5, & 6: Refactor the text grid into a grid of distinct Cell objects. Add locked doors (`D`). Treat the level grid as a tore (torus), meaning the edges wrap around to the opposite sides.
+
+### World 4: Enemies & Artificial Intelligence
+This world uses inheritance and collections to populate the game with hazards.
+* Level 1 & 2: Create basic enemies (`R`) with unique names and lives that move randomly one square at a time. If a player and enemy collide, the player loses a life and the enemies reset to their starting positions.
+* Level 3 & 4: Use Sets and `hashcode()` to track cells occupied by enemies. Add Ghost enemies (`G`) that move in straight lines, ignore obstacles, and change direction to intercept the player when aligned on the same row or column.
+* Level 5 & 6: Implement Hunter enemies (`C`) that actively pursue the player using pathfinding algorithms like BFS, Dijkstra, or A*. Restructure the entire project to group related classes into packages.
+
+### World 5: Inventories & Skills
+This world expands the player's capabilities using interfaces and polymorphism.
+* Level 1 & 2: Implement an inventory system capped at 5 slots for items and skills. Introduce Weapon items (`W`) that allow the player to automatically defeat enemies upon collision without losing a life.
+* Level 3: Add Hourglass items (`H`) that, when used, freeze all enemies for 10 player movements.
+* Level 4 & 5: The player automatically unlocks a Lockpicking skill upon reaching 100 points, allowing them to traverse locked doors. Defeating 3 enemies grants a Teleportation skill, moving the player to a random empty cell whenever used.
+* Level 6: Implement sorting mechanisms (`Comparable`, `Comparator`) to organize the inventory by type and name. Add specific win conditions for different levels, such as killing all enemies or finding a specific item.
+
+### World 6: Graphical User Interface (JavaFX)
+The final world transitions the game from a console application to a fully graphical experience using JavaFX.
+* Level 1 & 2: Create a visual window and render the game grid, characters, and items using the PAC architectural model and a Canvas.
+* Level 3 & 4: Link the keyboard arrow keys to in-game movement using event handlers. Design a graphical interface using CSS and panels to show the inventory, lives, and score.
+* Level 5 & 6: Use property data binding so that clicking an item in the visual inventory activates it. Conclude by adding start/end screens, dialog boxes for entering the player's name, and a real-time continuous movement loop using an `AnimationTimer`.
+
+### Debugging World (Monde débogage)
+This is an auxiliary section dedicated to troubleshooting code.
+* Practice interpreting console error messages.
+* Use a debugger (`jdb`) to set breakpoints, inspect the state of variables, and correct code errors.

@@ -93,9 +93,11 @@ public class Game {
             		} else if(game.index == game.levels.length - 1) {
             			System.out.println("GAME FINISHED");
             			System.out.println("Thanks for playing " + game.level.getPlayer().getName() + "!");
+            			game.setGameOn(false);
             		}
             	} 
             }
+			myScanner.close();
             
 		} catch (Exception e) {
             System.err.println(e);   
