@@ -12,16 +12,22 @@ import generation.characters.Player;
  */
 public class Game {
 
+	/** Whether the game loop should continue running. */
 	private boolean gameOn = true;
+	/** Paths to the level configuration files, in play order. */
 	private String[] levels;
+	/** Index of the currently active level within {@link #levels}. */
 	private int index = 0;
+	/** The currently active level instance. */
 	private Level level;
+	/** The player that persists and carries stats across all levels. */
 	private Player player;
 
 	/**
 	 * Constructs a new Game instance.
 	 * @param args Array of level file paths.
 	 * @param name The name of the player.
+	 * @throws IllegalArgumentException if no level file path is provided.
 	 */
 	public Game(String[] args, String name) throws IllegalArgumentException{
 		if(args.length == 0) {
@@ -34,7 +40,7 @@ public class Game {
 
 	/**
 	 * Sets the game state.
-	 * @param status true if the game is running, false otherwise.
+	 * @param status {@code true} if the game should keep running, {@code false} to stop.
 	 */
 	public void setGameOn(boolean status){
 		this.gameOn = status;
@@ -42,15 +48,15 @@ public class Game {
 
 	/**
 	 * Checks if the game is currently running.
-	 * @return true if the game is on, false otherwise.
+	 * @return {@code true} if the game is on, {@code false} otherwise.
 	 */
 	public boolean getGameOn() {
 		return this.gameOn;
 	}
-	
+
 	/**
 	 * Advances the game to the next level.
-	 * Preserves player stats (score, lives) across levels.
+	 * The same {@link Player} instance is reused so score and lives carry over.
 	 */
 	public void nextLevel() {
 		this.index++;
@@ -58,15 +64,15 @@ public class Game {
 		System.out.println(this.level);
 	}
 
-	
 	/**
 	 * Main entry point for the game.
-	 * @param args Command line arguments containing level file paths.
+	 * Prompts for a player name, runs the game loop, and handles level transitions.
+	 * @param args Command-line arguments containing level file paths.
 	 */
 	public static void main(String[] args) {
 		try {
 			Scanner myScanner = new Scanner(System.in);
-			String name; 
+			String name;
 			System.out.println("What is your Player name ? ");
 			name = myScanner.next();
 			Game game = new Game(args, name);
@@ -87,21 +93,21 @@ public class Game {
             			game.setGameOn(false);
             		}
             	}
-            	if(game.level.getNumberOfCoins() == 0) {
+            	if(game.level.isComplete()) {
             		System.out.println("LEVEL FINISHED");
-            		if(game.index < game.levels.length - 1) {            			
+            		if(game.index < game.levels.length - 1) {
             			game.nextLevel();
             		} else if(game.index == game.levels.length - 1) {
             			System.out.println("GAME FINISHED");
             			System.out.println("Thanks for playing " + game.level.getPlayer().getName() + "!");
             			game.setGameOn(false);
             		}
-            	} 
+            	}
             }
 			myScanner.close();
-            
+
 		} catch (Exception e) {
-            System.err.println(e);   
+            System.err.println(e);
             e.printStackTrace();
         }
 	}

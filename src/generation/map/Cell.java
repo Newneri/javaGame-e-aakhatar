@@ -1,5 +1,6 @@
 package generation.map;
 
+import generation.items.Usable;
 import java.util.Objects;
 
 /**
@@ -14,6 +15,7 @@ public class Cell {
 	private String type;
 	/** Whether this cell currently contains a collectible coin. */
 	private boolean hasCoin;
+	private Usable item = null;
 
 	/**
 	 * Constructs a new Cell.
@@ -49,6 +51,18 @@ public class Cell {
 	 */
 	public boolean getHasCoin() {
 		return this.hasCoin;
+	}
+	
+	public void setItem(Usable item) {
+		this.item = item;
+	}
+	
+	public Usable getItem() {
+		return this.item;
+	}
+	
+	public boolean hasItem() {
+		return this.item != null;
 	}
 
 	/**

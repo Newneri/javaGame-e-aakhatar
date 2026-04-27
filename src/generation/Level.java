@@ -1,19 +1,15 @@
 package generation;
 import java.util.Random;
 
+import generation.characters.*;
 import generation.characters.Character;
-import generation.characters.Enemy;
-import generation.characters.Ghost;
-import generation.characters.Hunter;
-import generation.characters.Player;
-import generation.map.Cell;
-import generation.map.LockedDoor;
-import generation.map.Movement;
-import generation.map.Wall;
+import generation.map.*;
+import generation.items.*;
 
 import java.nio.file.*;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.io.IOException;
 
@@ -28,8 +24,12 @@ public class Level {
 	private Player player;
 	private List<Enemy> enemies = new ArrayList<Enemy>();
 	private HashSet<Cell> occupiedCells = new HashSet<>();
+	private int frozenTurns = 0;
 	private static int numberOfLevels = 0;
 	private int numberOfCoins;
+	public Random rand = new Random();
+	private WinCondition winCondition;
+
 	
 	
 	/**
@@ -42,19 +42,20 @@ public class Level {
 		
 		numberOfLevels++;
 		String[] stringMap = readLevel(filename);
+		
+		winCondition = WinCondition.fromkey(stringMap[0]);
 				
-		this.rows = stringMap.length;
-		this.cols = stringMap[0].length();
-		this.setMap(stringMap);
+		this.rows = stringMap.length - 1;
+		this.cols = stringMap[1].length();
+		this.setMap(Arrays.copyOfRange(stringMap, 1, stringMap.length));
 		int x;
 		int y;
 		boolean verif;
-		Random rand = new Random();
 
 		do {
 			y = rand.nextInt(this.rows);
 			x = rand.nextInt(this.cols);
-			verif = !this.map[y][x].getType().equals("empty") || this.isEnemyAt(y, x);
+			verif = !this.map[y][x].getType().equals("empty") || this.isEnemyAt(y, x) || this.map[y][x].hasItem();
 		} while(verif);
 		
 		int[] initialPosition = {y, x};
@@ -63,6 +64,19 @@ public class Level {
 		this.player.setInitialPosition(initialPosition.clone());
 		this.numberOfCoins = this.countCoins();
 		
+	}
+	
+	public boolean isComplete() {
+		switch(this.winCondition) {
+			case WinCondition.KILL_ALL_ENEMIES:
+				return this.getEnemies().isEmpty();
+			case WinCondition.GET_ALL_COINS:
+				return this.countCoins() == 0;
+			case WinCondition.PICK_CROWN:
+				return this.getPlayer().hasItem(Crown.class);
+			default:
+				return false;
+		}
 	}
 	
 	/**
@@ -171,18 +185,29 @@ public class Level {
 					case 'R' -> {
 						this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
 						this.getEnemies().add(new Enemy("Zombie" + this.getEnemies().size(), 1, new int[]{i,j}));
-						this.occupiedCells.add(this.map[i][j]);
+						this.getOccupiedCells().add(this.map[i][j]);
 					}
 					case 'G' -> {
 						this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
 						this.getEnemies().add(new Ghost("Ghost" + this.getEnemies().size(), 1, new int[]{i,j}));
-						this.occupiedCells.add(this.map[i][j]);
+						this.getOccupiedCells().add(this.map[i][j]);
 					}
 					case 'C' -> {
 						this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
 						this.getEnemies().add(new Hunter("Hunter" + this.getEnemies().size(), 3, new int[]{i,j}));
-						this.occupiedCells.add(this.map[i][j]);
-
+						this.getOccupiedCells().add(this.map[i][j]);
+					}
+					case 'W' -> {
+						this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
+						this.map[i][j].setItem(new Weapon());
+					}
+					case 'H' -> {
+						this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
+						this.map[i][j].setItem(new Hourglass());
+					}
+					case 'K' -> {
+						this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
+						this.map[i][j].setItem(new Crown());
 					}
 					default  -> this.map[i][j] = new Cell(new int[]{i, j}, "empty", false);
 				}
@@ -197,6 +222,14 @@ public class Level {
 	 */
 	public Player getPlayer() { return this.player; }
 	
+	public int getFrozenTurns() {
+		return this.frozenTurns;
+	}
+	
+	public void freeze(int turns) {
+		this.frozenTurns = turns;
+	}
+	
 	/**
 	 * Checks in O(1) whether any enemy occupies the cell at (i, j).
 	 * @param i The row index.
@@ -204,7 +237,7 @@ public class Level {
 	 * @return {@code true} if an enemy is on that cell, {@code false} otherwise.
 	 */
 	public boolean isEnemyAt(int i, int j) {
-		return this.occupiedCells.contains(this.getMap()[i][j]);
+		return this.getOccupiedCells().contains(this.getMap()[i][j]);
 	}
 	
 	/**
@@ -223,6 +256,10 @@ public class Level {
 		return null;
 	}
 	
+	public HashSet<Cell> getOccupiedCells(){
+		return this.occupiedCells;
+	}
+	
 	/**
 	 * Returns a full string representation of the level for console display.
 	 * Includes player stats, level info, and the map with the player's position overlaid.
@@ -230,7 +267,7 @@ public class Level {
 	 */
 	@Override
 	public String toString() {
-		String show = "";
+		String show = this.winCondition.getDisplayText() + "\n";
 		show += this.getPlayer() + "---" + "Level " + (getNumberOfLevels()) + " Coins: " + this.getNumberOfCoins() + "\n";
 		int[] playerPos = this.getPlayer().getPosition();
 		for(int i = 0; i < this.getRows(); i++) {
@@ -245,6 +282,8 @@ public class Level {
             		} else{
             			show += 'R';
             		}
+            	} else if(this.getMap()[i][j].hasItem()) {
+            		show += this.getMap()[i][j].getItem().getSymbol();
             	} else {
             		Cell cell = this.getMap()[i][j];
             		show += cell;
@@ -263,7 +302,7 @@ public class Level {
 	 * @param canGoOnTrap {@code true} if the character is allowed to step on traps (player only).
 	 * @return {@code true} if the destination is reachable, {@code false} otherwise.
 	 */
-	private boolean checkMoveValidity(Movement move, Character character, Boolean canGoOnTrap) {
+	private boolean checkMoveValidity(Movement move, Character character) {
 		int y = move.getMovement()[0];
 		int x = move.getMovement()[1];
 		Cell nextCell;
@@ -278,8 +317,14 @@ public class Level {
 		} else {
 			nextCell = this.getMap()[character.getPosition()[0] + y][character.getPosition()[1] + x];
 		}
-		if(canGoOnTrap) {
-			return (!nextCell.getType().equals("wall"));
+		if(character instanceof Ghost) {
+			return true;
+		} else if(character instanceof Player) {
+			if(((Player) character).hasItem(Lockpicking.class)) {
+				return (!nextCell.getType().equals("wall") || nextCell instanceof LockedDoor);
+			} else {
+				return (!nextCell.getType().equals("wall"));
+			}
 		} else {
 			return (!nextCell.getType().equals("wall") && !nextCell.getType().equals("trap"));
 		}
@@ -291,9 +336,9 @@ public class Level {
 	 */
 	public void resetEnemies() {
 		for(Enemy enemy: this.getEnemies()) {
-			this.occupiedCells.remove(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
+			this.getOccupiedCells().remove(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
 			enemy.setPosition(enemy.getInitialPosition());
-			this.occupiedCells.add(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
+			this.getOccupiedCells().add(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
 		}
 	}
 
@@ -302,29 +347,71 @@ public class Level {
 	 * Handles movement, scoring, and collisions.
 	 */
 	public void update() {
-		Movement move = this.getPlayer().chooseMovement();
-		for(Enemy enemy: this.getEnemies()) {
-			if(enemy instanceof Ghost) {
-				((Ghost) enemy).setTarget(this.getPlayer());
-			} else if(enemy instanceof Hunter) {
-				((Hunter) enemy).setTarget(this.getPlayer(), this.getMap());
-			}
-			Movement moveEnemy = enemy.chooseMovement();
-			if(enemy instanceof Ghost || this.checkMoveValidity(moveEnemy, enemy, false)) {
-				this.occupiedCells.remove(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
-				enemy.move(moveEnemy, this.getMap());	
-				this.occupiedCells.add(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
+		if(!this.getPlayer().hasItem(Lockpicking.class) && this.getPlayer().getScore() >= 100) {
+			this.getPlayer().addItem(new Lockpicking());
+		}
+		if(!this.getPlayer().hasItem(Teleportation.class) && this.getPlayer().getEnemiesDefeated() >= 3) {
+			this.getPlayer().addItem(new Teleportation());
+		}
+		
+		int usedItem = 0;
+		if(this.getPlayer().getInventory().size() > 0) {
+			char key = this.getPlayer().readKey();
+			switch(key) {
+				case '&'-> {
+					usedItem += this.getPlayer().activateSlot(0, this);
+					break;
+				}
+				case 'é'-> {
+					usedItem += this.getPlayer().activateSlot(1, this);
+					break;
+				}
+				case '"' -> {
+					usedItem += this.getPlayer().activateSlot(2, this);
+					break;
+				}
+				case '\'' -> {
+					usedItem += this.getPlayer().activateSlot(3, this);
+					break;
+				}
+				case '(' -> {
+					usedItem += this.getPlayer().activateSlot(4, this);
+					break;
+				}
+				default -> {
+					break;
+				}
 			}
 		}
+		
+		if(this.getFrozenTurns() > 0) {
+			this.freeze(this.getFrozenTurns() - 1);
+		} else {
+			for(Enemy enemy: this.getEnemies()) {
+				if(enemy instanceof Ghost) {
+					((Ghost) enemy).setTarget(this.getPlayer());
+				} else if(enemy instanceof Hunter) {
+					((Hunter) enemy).setTarget(this.getPlayer(), this.getMap());
+				}
+				Movement moveEnemy = enemy.chooseMovement();
+				if(this.checkMoveValidity(moveEnemy, enemy)) {
+					this.getOccupiedCells().remove(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
+					enemy.move(moveEnemy, this.getMap());	
+					this.getOccupiedCells().add(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
+				}
+			}
+		}
+		
+		Movement move = usedItem > 0 ? Movement.NONE : this.getPlayer().chooseMovement();
 
-		if(this.checkMoveValidity(move, this.getPlayer(), true)) {
+		if(this.checkMoveValidity(move, this.getPlayer())) {
 			
 			this.getPlayer().move(move, this.getMap());
 			Cell dest = this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]];
 			
 			if(dest.getHasCoin()) {
 				// Recolt the coin
-				this.map[dest.getPosition()[0]][dest.getPosition()[1]] = new Cell(dest.getPosition(), "empty", false);
+				this.getMap()[dest.getPosition()[0]][dest.getPosition()[1]] = new Cell(dest.getPosition(), "empty", false);
 				this.getPlayer().setScore(this.getPlayer().getScore() + 10);
 				this.setNumberOfCoins(this.getNumberOfCoins() - 1);
 				
@@ -333,26 +420,36 @@ public class Level {
 				this.getPlayer().setPosition(getPlayer().getInitialPosition());
 				this.getPlayer().setLives(this.getPlayer().getLives() - 2);
 				this.resetEnemies();
-			} 
+			} else if(dest.hasItem()) {
+				this.getPlayer().addItem(dest.getItem());
+				dest.setItem(null);
+			}
 		}
 		
 		if(this.isEnemyAt(this.getPlayer().getPosition()[0], this.getPlayer().getPosition()[1])) {
-			// Collision with enemy -> reset enemies positions and player loses 1 life (if normal enemy) or 2 lifes (if hunter type)
-			if(this.getEnemyAt(this.getPlayer().getPosition()[0], this.getPlayer().getPosition()[1]) instanceof Hunter) {
-				this.getPlayer().setLives(this.getPlayer().getLives() - 2);
-			} else {				
-				this.getPlayer().setLives(this.getPlayer().getLives() - 1);
+			if(this.getPlayer().hasItem(Weapon.class)) {
+				this.getPlayer().useItem(this.getPlayer().getItemIndex(Weapon.class), this);
+				
+			} else {
+				Enemy enemy = this.getEnemyAt(this.getPlayer().getPosition()[0], this.getPlayer().getPosition()[1]);
+				if(enemy instanceof Hunter) {
+					this.getPlayer().setLives(this.getPlayer().getLives() - 2);
+				} else {
+					this.getPlayer().setLives(this.getPlayer().getLives() - 1);
+				}
+				System.out.println(this.getPlayer().getName() + " collided with " + enemy.getName());
+				this.resetEnemies();
 			}
-			System.out.println(this.getPlayer().getName() + " collided with " + this.getEnemyAt(this.getPlayer().getPosition()[0], this.getPlayer().getPosition()[1]).getName());
-			this.resetEnemies();
 		}
+		
+		for(Enemy enemy: this.getEnemies()) {
+			if(enemy.getLives() == 0){
+				this.getPlayer().incrementEnemiesDefeated();
+				this.getOccupiedCells().remove(this.getMap()[enemy.getPosition()[0]][enemy.getPosition()[1]]);
+			}
+		}
+		this.getEnemies().removeIf(e -> e.getLives() == 0);
 		
 		System.out.println(this);
 	}
-
-	/**
-	 * Entry point for testing the Level class independently.
-	 * @param args Command line arguments (unused).
-	 */
-	public static void main(String[] args) {}
 }
