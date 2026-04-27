@@ -4,7 +4,7 @@ import generation.Level;
 /**
  * Represents an Hourglass item that freezes all enemies for a fixed number of turns when used.
  * Useful for evading enemy attacks or creating space to collect items.
- * Displayed as 'H' on the map.
+ * Displayed as 'H' on the inventory.
  * @author Abdelhamid AKHATAR &lt;abdelhamid.akhatar@etu.cyu.fr&gt;
  */
 public class Hourglass extends Item{

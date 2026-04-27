@@ -1,5 +1,2 @@
 module:game
-game
-generation
-generation.characters
-generation.map
+generation.items
