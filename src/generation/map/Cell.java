@@ -53,14 +53,26 @@ public class Cell {
 		return this.hasCoin;
 	}
 	
+	/**
+	 * Sets the usable item placed on this cell.
+	 * @param item The usable item to place, or {@code null} to remove any item.
+	 */
 	public void setItem(Usable item) {
 		this.item = item;
 	}
-	
+
+	/**
+	 * Gets the usable item placed on this cell, if any.
+	 * @return The {@link Usable} item on this cell, or {@code null} if none.
+	 */
 	public Usable getItem() {
 		return this.item;
 	}
-	
+
+	/**
+	 * Checks whether this cell contains an item.
+	 * @return {@code true} if an item is on this cell, {@code false} otherwise.
+	 */
 	public boolean hasItem() {
 		return this.item != null;
 	}

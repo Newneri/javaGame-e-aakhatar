@@ -102,6 +102,29 @@ public class Level {
 	public List<Enemy> getEnemies() {
 		return this.enemies;
 	}
+
+	/**
+	 * Checks if there is an enemy at the specified coordinates.
+	 * @param y The y-coordinate to check.
+	 * @param x The x-coordinate to check.
+	 * @return {@code true} if an enemy is present, {@code false} otherwise.
+	 */	public boolean isEnemyAt(int y, int x) {
+		return this.getOccupiedCells().contains(this.getMap()[y][x]);
+	}
+
+	/**
+	 * Gets the enemy located at the specified coordinates.
+	 * @param y The y-coordinate of the enemy.
+	 * @param x The x-coordinate of the enemy.
+	 * @return The {@link Enemy} at the given position, or {@code null} if none exists.
+	 */	public Enemy getEnemyAt(int y, int x) {
+		for(Enemy enemy: this.getEnemies()) {
+			if(enemy.getPosition()[0] == y && enemy.getPosition()[1] == x) {
+				return enemy;
+			}
+		}
+		return null;
+	}
 	
 
 	/**
@@ -221,43 +244,27 @@ public class Level {
 	 * @return The player.
 	 */
 	public Player getPlayer() { return this.player; }
-	
+
+	public HashSet<Cell> getOccupiedCells(){
+		return this.occupiedCells;
+	}
+
+	/**
+	 * Gets the current number of turns enemies are frozen.
+	 * When frozen, enemies cannot move.
+	 * @return The number of remaining frozen turns (0 if not frozen).
+	 */
 	public int getFrozenTurns() {
 		return this.frozenTurns;
 	}
-	
+
+	/**
+	 * Freezes all enemies for a given number of turns.
+	 * During frozen turns, enemies will not move each update cycle.
+	 * @param turns The number of turns to freeze enemies for.
+	 */
 	public void freeze(int turns) {
 		this.frozenTurns = turns;
-	}
-	
-	/**
-	 * Checks in O(1) whether any enemy occupies the cell at (i, j).
-	 * @param i The row index.
-	 * @param j The column index.
-	 * @return {@code true} if an enemy is on that cell, {@code false} otherwise.
-	 */
-	public boolean isEnemyAt(int i, int j) {
-		return this.getOccupiedCells().contains(this.getMap()[i][j]);
-	}
-	
-	/**
-	 * Returns the enemy at position (i, j), or {@code null} if none is present.
-	 * Used for display purposes to determine the enemy type (e.g. Ghost vs Zombie).
-	 * @param i The row index.
-	 * @param j The column index.
-	 * @return The {@link Enemy} at that position, or {@code null}.
-	 */
-	public Enemy getEnemyAt(int i, int j) {
-		for(Enemy enemy: this.getEnemies()) {
-			if(enemy.getPosition()[0] == i && enemy.getPosition()[1] == j) {
-				return enemy;
-			}
-		}
-		return null;
-	}
-	
-	public HashSet<Cell> getOccupiedCells(){
-		return this.occupiedCells;
 	}
 	
 	/**

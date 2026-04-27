@@ -34,40 +34,59 @@ public class Player extends Character{
 	}
 
 	/**
+	 * Gets the player's current score.
+	 * @return The player's score.
+	 */public int getScore() {
+		return this.score;
+	}
+
+	/**
+	 * Sets the player's score to a specific value.
+	 * @param score The new score to set.
+	 * @return
+	 */
+	public void setScore(int score) {
+		if(score >= 0) {
+			this.score = score;
+		} else {
+			this.score = 0;
+		}
+	}
+
+	/**
 	 * Gets the total number of players instantiated.
 	 * @return The count of players.
 	 */
 	public static int getNumberOfPlayers() { return numberOfPlayers; }
 
+	/**
+	 * Gets the number of enemies defeated by this player.
+	 * @return The count of defeated enemies.
+	 */
 	public int getEnemiesDefeated() {
 		return this.enemiesDefeated;
 	}
-	
+
+	/**
+	 * Increments the count of enemies defeated by this player by 1.
+	 */
 	public void incrementEnemiesDefeated() {
 		this.enemiesDefeated++;
 	}
 
 	/**
-	 * Gets the player's current score.
-	 * @return The score.
+	 * Gets the player's inventory list.
+	 * @return A list of {@link Usable} items/abilities in the inventory (max 5).
 	 */
-	public int getScore() { return this.score; }
-	
-
-	/**
-	 * Sets the player's score.
-	 * @param score The new score (ignored if negative).
-	 */
-	public void setScore(int score) {
-		if(score >= 0) {
-			this.score = score;
-		}
-	}
-	
 	public List<Usable> getInventory(){
 		return this.inventory;
 	}
-	
+
+	/**
+	 * Checks whether the player has an item of a specific type in their inventory.
+	 * @param itemClass The class to search for (e.g., Weapon.class, Lockpicking.class).
+	 * @return {@code true} if an item of that type exists in inventory, {@code false} otherwise.
+	 */
 	public boolean hasItem(Class<?> itemClass) {
 		for(Usable usable: this.inventory) {
 			if(itemClass.isInstance(usable)) {
@@ -76,7 +95,12 @@ public class Player extends Character{
 		}
 		return false;
 	}
-	
+
+	/**
+	 * Finds the inventory index of an item of a specific type.
+	 * @param itemClass The class to search for (e.g., Weapon.class, Lockpicking.class).
+	 * @return The inventory index (0-4) if found, or -1 if not found.
+	 */
 	public int getItemIndex(Class<?> itemClass) {
 		for(int i = 0; i < this.inventory.size(); i++) {
 			if(itemClass.isInstance(this.inventory.get(i))) {
@@ -85,7 +109,11 @@ public class Player extends Character{
 		}
 		return -1;
 	}
-	
+
+	/**
+	 * Reads a single character from user input.
+	 * @return The first character of the next user input.
+	 */
 	public char readKey() {
 		return String.valueOf(myScanner.next()).charAt(0);
 	}
@@ -113,7 +141,11 @@ public class Player extends Character{
 				return Movement.NONE;
 		}
 	}
-	
+
+	/**
+	 * Sorts the inventory using {@link InventoryComparator}.
+	 * Items appear before Abilities, and both are sorted alphabetically by name.
+	 */
 	public void sortInventory() {
 		Collections.sort(this.getInventory(), this.invSorter);
 	}
@@ -154,28 +186,49 @@ public class Player extends Character{
 		}
 		return false;
 	}
-	
+
+	/**
+	 * Adds an item to the player's inventory if there is space (max 5 items).
+	 * @param usable The item or ability to add to inventory.
+	 */
 	public void addItem(Usable usable) {
-		if(this.getInventory().size() < 5) {			
+		if(this.getInventory().size() < 5) {
 			this.getInventory().add(usable);
 		}
 	}
-	
+
+	/**
+	 * Uses an item from the inventory at the given index.
+	 * If the item is consumable, it is removed from inventory after use.
+	 * @param index The inventory slot (0-4) to use.
+	 * @param level The current game level context.
+	 */
 	public void useItem(int index, Level level) {
 		this.getInventory().get(index).use(level);
 		if(this.getInventory().get(index).isConsummed()) {
 			this.getInventory().remove(index);
 		}
 	}
-	
+
+	/**
+	 * Checks if an inventory slot can be activated (used).
+	 * @param index The inventory slot (0-4) to check.
+	 * @return {@code true} if the slot exists, contains an item, and the item is activable.
+	 */
 	public boolean tryUseSlot(int index) {
-		if(this.getInventory().size() > index && this.getInventory().get(index) != null 
+		if(this.getInventory().size() > index && this.getInventory().get(index) != null
 				&& this.getInventory().get(index).getActivable()) {
 			return true;
 		}
 		return false;
 	}
-	
+
+	/**
+	 * Attempts to activate and use an item in the inventory slot.
+	 * @param index The inventory slot (0-4) to activate.
+	 * @param level The current game level context.
+	 * @return 1 if the item was successfully used, 0 if the slot could not be used.
+	 */
 	public int activateSlot(int index, Level level) {
 		if(this.tryUseSlot(index)) {
 			this.useItem(index, level);
