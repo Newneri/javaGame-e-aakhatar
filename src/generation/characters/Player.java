@@ -36,7 +36,8 @@ public class Player extends Character{
 	/**
 	 * Gets the player's current score.
 	 * @return The player's score.
-	 */public int getScore() {
+	 */
+	public int getScore() {
 		return this.score;
 	}
 
@@ -124,9 +125,8 @@ public class Player extends Character{
 	 * Keys: 'z' = UP, 's' = DOWN, 'q' = LEFT, 'd' = RIGHT. Any other key yields NONE.
 	 * @return The {@link Movement} corresponding to the key pressed.
 	 */
-	@Override
 	public Movement chooseMovement() {
-		char key = String.valueOf(myScanner.next()).charAt(0);
+		char key = this.readKey();
 
 		switch (key){
 			case 'q':
@@ -151,6 +151,11 @@ public class Player extends Character{
 	}
 
 
+	/**
+	 * Returns a formatted string representation of the player for console display.
+	 * Includes player stats (name, score, lives, kills) and a visual inventory table.
+	 * @return A multi-line string showing player information and inventory.
+	 */
 	@Override
 	public String toString() {
 		this.sortInventory();
@@ -178,7 +183,13 @@ public class Player extends Character{
 		return stats + top + mid + "\n" + names + "\n" + bot;
 	}
 
-	@Override 
+	/**
+	 * Compares this player with another object for equality.
+	 * Two players are equal if their names are the same (case-insensitive).
+	 * @param obj The object to compare with.
+	 * @return {@code true} if both are players with the same name, {@code false} otherwise.
+	 */
+	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof Player) {
 			Player player = (Player) obj;
@@ -227,14 +238,11 @@ public class Player extends Character{
 	 * Attempts to activate and use an item in the inventory slot.
 	 * @param index The inventory slot (0-4) to activate.
 	 * @param level The current game level context.
-	 * @return 1 if the item was successfully used, 0 if the slot could not be used.
 	 */
-	public int activateSlot(int index, Level level) {
+	public void activateSlot(int index, Level level) {
 		if(this.tryUseSlot(index)) {
 			this.useItem(index, level);
-			return 1;
 		}
-		return 0;
 	}
 }
 

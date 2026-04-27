@@ -99,11 +99,22 @@ public class Cell {
 		}
 	}
 	
-	@Override 
+	/**
+	 * Returns a hash code for this cell based on its grid position.
+	 * Hash is computed from row and column coordinates.
+	 * @return The hash code for this cell.
+	 */
+	@Override
 	public int hashCode() {
 		return Objects.hash(this.position[0], this.position[1]);
 	}
 	
+	/**
+	 * Compares this cell with another object for equality.
+	 * Two cells are equal if their grid positions (row and column) are identical.
+	 * @param obj The object to compare with.
+	 * @return {@code true} if both are cells with the same position, {@code false} otherwise.
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof Cell) {

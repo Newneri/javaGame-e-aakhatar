@@ -66,6 +66,14 @@ public class Level {
 		
 	}
 	
+	/**
+	 * Checks whether the level is complete based on its win condition.
+	 * The completion depends on the level's {@link WinCondition}:
+	 * - KILL_ALL_ENEMIES: All enemies must be defeated (list is empty).
+	 * - GET_ALL_COINS: All coins must be collected (count reaches 0).
+	 * - PICK_CROWN: The player must have the Crown item in inventory.
+	 * @return {@code true} if the win condition is met, {@code false} otherwise.
+	 */
 	public boolean isComplete() {
 		switch(this.winCondition) {
 			case WinCondition.KILL_ALL_ENEMIES:
@@ -245,6 +253,11 @@ public class Level {
 	 */
 	public Player getPlayer() { return this.player; }
 
+	/**
+	 * Gets the set of cells currently occupied by enemies.
+	 * This set is used for efficient collision detection and enemy position tracking.
+	 * @return A {@link HashSet} containing all cells that have enemies on them.
+	 */
 	public HashSet<Cell> getOccupiedCells(){
 		return this.occupiedCells;
 	}
@@ -361,33 +374,31 @@ public class Level {
 			this.getPlayer().addItem(new Teleportation());
 		}
 		
-		int usedItem = 0;
-		if(this.getPlayer().getInventory().size() > 0) {
-			char key = this.getPlayer().readKey();
-			switch(key) {
-				case '&'-> {
-					usedItem += this.getPlayer().activateSlot(0, this);
-					break;
-				}
-				case 'é'-> {
-					usedItem += this.getPlayer().activateSlot(1, this);
-					break;
-				}
-				case '"' -> {
-					usedItem += this.getPlayer().activateSlot(2, this);
-					break;
-				}
-				case '\'' -> {
-					usedItem += this.getPlayer().activateSlot(3, this);
-					break;
-				}
-				case '(' -> {
-					usedItem += this.getPlayer().activateSlot(4, this);
-					break;
-				}
-				default -> {
-					break;
-				}
+		Movement move = Movement.NONE;
+		char key = this.getPlayer().readKey();
+		switch(key) {
+			case '&'-> {
+				this.getPlayer().activateSlot(0, this);
+				break;
+			}
+			case 'é'-> {
+				this.getPlayer().activateSlot(1, this);
+				break;
+			}
+			case '"' -> {
+				this.getPlayer().activateSlot(2, this);
+				break;
+			}
+			case '\'' -> {
+				this.getPlayer().activateSlot(3, this);
+				break;
+			}
+			case '(' -> {
+				this.getPlayer().activateSlot(4, this);
+				break;
+			}
+			default -> {
+				move = this.getPlayer().chooseMovement();
 			}
 		}
 		
@@ -409,10 +420,7 @@ public class Level {
 			}
 		}
 		
-		Movement move = usedItem > 0 ? Movement.NONE : this.getPlayer().chooseMovement();
-
 		if(this.checkMoveValidity(move, this.getPlayer())) {
-			
 			this.getPlayer().move(move, this.getMap());
 			Cell dest = this.getMap()[this.getPlayer().getPosition()[0]][this.getPlayer().getPosition()[1]];
 			
